@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | The Happy Spoon Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <script>
+    window.__ENV__ = {
+      VITE_SUPABASE_URL:      'sb_publishable_acbF6EkNpK9_DEKUJZOb4w_hAbciaul',
+      VITE_SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVheXd3cGl1c3F6Znpra2xjbXlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5ODg3OTUsImV4cCI6MjA5NjU2NDc5NX0.E8ey4LUHRvcUfvCGa_vCY1lRWQFddRodcE94bYj-DQ0'
+    };
+  </script>
+</head>
+<body>
+<div id="toast-container" aria-live="polite"></div>
+
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-brand">
+      <h2>The Happy Spoon</h2>
+      <p>Admin Dashboard</p>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="sidebar-link active" data-view="overview">
+        <span class="icon">📊</span> Overview
+      </button>
+      <button class="sidebar-link" data-view="reservations">
+        <span class="icon">📅</span> Reservations
+      </button>
+      <button class="sidebar-link" data-view="messages">
+        <span class="icon">✉️</span> Messages
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="sidebar-link" id="logout-btn">
+        <span class="icon">🚪</span> Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="admin-main" id="admin-main">
+
+    <!-- ===== OVERVIEW VIEW ===== -->
+    <div id="view-overview" class="admin-view">
+      <div class="admin-topbar">
+        <div>
+          <h1>Overview</h1>
+          <p class="sub" id="greeting">Good day!</p>
+        </div>
+        <a href="../index.html" style="color:var(--clr-muted);font-size:.85rem">← View Site</a>
+      </div>
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card"><p class="stat-label">Total Reservations</p><p class="stat-value" id="stat-total">—</p></div>
+        <div class="stat-card"><p class="stat-label">Pending</p><p class="stat-value" id="stat-pending">—</p></div>
+        <div class="stat-card"><p class="stat-label">Confirmed Today</p><p class="stat-value" id="stat-today">—</p></div>
+        <div class="stat-card"><p class="stat-label">Unread Messages</p><p class="stat-value" id="stat-msgs">—</p></div>
+      </div>
+
+      <!-- Recent Reservations preview -->
+      <div class="admin-section">
+        <div class="section-header">
+          <h2>Recent Reservations</h2>
+          <button class="filter-btn" onclick="switchView('reservations')">View All →</button>
+        </div>
+        <div class="data-table-wrapper" id="overview-res-table">
+          <div class="loading-state">Loading…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== RESERVATIONS VIEW ===== -->
+    <div id="view-reservations" class="admin-view" style="display:none">
+      <div class="admin-topbar">
+        <div>
+          <h1>Reservations</h1>
+          <p class="sub">Manage all table bookings</p>
+        </div>
+      </div>
+      <div class="admin-section">
+        <div class="section-header">
+          <div class="filter-bar" id="res-filters">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="pending">Pending</button>
+            <button class="filter-btn" data-filter="confirmed">Confirmed</button>
+            <button class="filter-btn" data-filter="cancelled">Cancelled</button>
+          </div>
+        </div>
+        <div class="data-table-wrapper" id="reservations-table">
+          <div class="loading-state">Loading reservations…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MESSAGES VIEW ===== -->
+    <div id="view-messages" class="admin-view" style="display:none">
+      <div class="admin-topbar">
+        <div>
+          <h1>Messages</h1>
+          <p class="sub">Contact form submissions</p>
+        </div>
+      </div>
+      <div class="admin-section">
+        <div class="section-header">
+          <div class="filter-bar" id="msg-filters">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="unread">Unread</button>
+            <button class="filter-btn" data-filter="read">Read</button>
+          </div>
+        </div>
+        <div class="data-table-wrapper" id="messages-table">
+          <div class="loading-state">Loading messages…</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script type="module">
+  import { supabase } from '../js/supabase.js';
+  import { showToast } from '../js/toast.js';
+
+  /* ── Auth guard ── */
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) { location.replace('./index.html'); }
+
+  /* ── State ── */
+  let reservations = [];
+  let messages     = [];
+  let resFilter    = 'all';
+  let msgFilter    = 'all';
+
+  /* ── Sign Out ── */
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    location.replace('./index.html');
+  });
+
+  /* ── Greeting ── */
+  const h = new Date().getHours();
+  document.getElementById('greeting').textContent =
+    h < 12 ? 'Good morning!' : h < 17 ? 'Good afternoon!' : 'Good evening!';
+
+  /* ── View switching ── */
+  const views = document.querySelectorAll('.admin-view');
+  const sideLinks = document.querySelectorAll('.sidebar-link[data-view]');
+
+  window.switchView = function(name) {
+    views.forEach(v => v.style.display = 'none');
+    sideLinks.forEach(l => l.classList.toggle('active', l.dataset.view === name));
+    document.getElementById(`view-${name}`).style.display = 'block';
+    if (name === 'reservations') renderReservations();
+    if (name === 'messages') renderMessages();
+  };
+
+  sideLinks.forEach(btn =>
+    btn.addEventListener('click', () => switchView(btn.dataset.view))
+  );
+
+  /* ── Fetch data ── */
+  async function fetchAll() {
+    const [{ data: res }, { data: msgs }] = await Promise.all([
+      supabase.from('reservations').select('*').order('created_at', { ascending: false }),
+      supabase.from('contact_messages').select('*').order('created_at', { ascending: false }),
+    ]);
+    reservations = res || [];
+    messages     = msgs || [];
+    updateStats();
+    renderOverviewTable();
+  }
+
+  function updateStats() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('stat-total').textContent   = reservations.length;
+    document.getElementById('stat-pending').textContent  = reservations.filter(r => r.status === 'pending').length;
+    document.getElementById('stat-today').textContent   = reservations.filter(r => r.date === today && r.status === 'confirmed').length;
+    document.getElementById('stat-msgs').textContent    = messages.filter(m => !m.read).length;
+  }
+
+  /* ── Overview table (top 5 reservations) ── */
+  function renderOverviewTable() {
+    const el = document.getElementById('overview-res-table');
+    const rows = reservations.slice(0, 5);
+    if (!rows.length) { el.innerHTML = emptyState('No reservations yet.'); return; }
+    el.innerHTML = resTable(rows, true);
+  }
+
+  /* ── Reservations table ── */
+  function renderReservations() {
+    const el = document.getElementById('reservations-table');
+    const filtered = resFilter === 'all' ? reservations : reservations.filter(r => r.status === resFilter);
+    if (!filtered.length) { el.innerHTML = emptyState('No reservations found.'); return; }
+    el.innerHTML = resTable(filtered, false);
+    attachResEvents(el);
+  }
+
+  function resTable(rows, compact) {
+    return `
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Guests</th>
+          <th>Status</th>
+          ${!compact ? '<th>Actions</th>' : ''}
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(r => `
+        <tr data-id="${r.id}">
+          <td>${esc(r.customer_name)}</td>
+          <td>${esc(r.email)}</td>
+          <td>${esc(r.phone)}</td>
+          <td>${formatDate(r.date)}</td>
+          <td>${formatTime(r.time)}</td>
+          <td>${r.guests}</td>
+          <td><span class="badge ${r.status}">${r.status}</span></td>
+          ${!compact ? `
+          <td>
+            <div class="action-btns">
+              <select class="status-select" data-id="${r.id}" aria-label="Change status">
+                <option value="pending"   ${r.status==='pending'  ?'selected':''}>Pending</option>
+                <option value="confirmed" ${r.status==='confirmed'?'selected':''}>Confirmed</option>
+                <option value="cancelled" ${r.status==='cancelled'?'selected':''}>Cancelled</option>
+              </select>
+              <button class="icon-btn danger delete-res" data-id="${r.id}" title="Delete">🗑</button>
+            </div>
+          </td>` : ''}
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  function attachResEvents(el) {
+    // Status change
+    el.querySelectorAll('.status-select').forEach(sel => {
+      sel.addEventListener('change', async () => {
+        const id     = sel.dataset.id;
+        const status = sel.value;
+        const { error } = await supabase.from('reservations').update({ status }).eq('id', id);
+        if (error) { showToast('Failed to update status.', 'error'); return; }
+        const res = reservations.find(r => r.id === id);
+        if (res) res.status = status;
+        updateStats();
+        renderReservations();
+        showToast(`Status updated to ${status}.`);
+      });
+    });
+
+    // Delete
+    el.querySelectorAll('.delete-res').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Delete this reservation? This cannot be undone.')) return;
+        const id = btn.dataset.id;
+        const { error } = await supabase.from('reservations').delete().eq('id', id);
+        if (error) { showToast('Failed to delete reservation.', 'error'); return; }
+        reservations = reservations.filter(r => r.id !== id);
+        updateStats();
+        renderReservations();
+        renderOverviewTable();
+        showToast('Reservation deleted.');
+      });
+    });
+  }
+
+  /* ── Messages table ── */
+  function renderMessages() {
+    const el = document.getElementById('messages-table');
+    const filtered = msgFilter === 'all' ? messages
+      : msgFilter === 'unread' ? messages.filter(m => !m.read)
+      : messages.filter(m => m.read);
+    if (!filtered.length) { el.innerHTML = emptyState('No messages found.'); return; }
+    el.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Subject</th>
+          <th>Message</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered.map(m => `
+        <tr data-id="${m.id}">
+          <td>${esc(m.name)}</td>
+          <td>${esc(m.email)}</td>
+          <td>${esc(m.subject)}</td>
+          <td style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(m.message)}">${esc(m.message)}</td>
+          <td>${formatDateTime(m.created_at)}</td>
+          <td><span class="badge ${m.read ? 'read' : 'unread'}">${m.read ? 'Read' : 'Unread'}</span></td>
+          <td>
+            <div class="action-btns">
+              ${!m.read ? `<button class="icon-btn mark-read" data-id="${m.id}" title="Mark as read">✓ Read</button>` : ''}
+              <button class="icon-btn danger delete-msg" data-id="${m.id}" title="Delete">🗑</button>
+            </div>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+
+    // Mark as read
+    el.querySelectorAll('.mark-read').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        const { error } = await supabase.from('contact_messages').update({ read: true }).eq('id', id);
+        if (error) { showToast('Failed to update.', 'error'); return; }
+        const msg = messages.find(m => m.id === id);
+        if (msg) msg.read = true;
+        updateStats();
+        renderMessages();
+        showToast('Marked as read.');
+      });
+    });
+
+    // Delete
+    el.querySelectorAll('.delete-msg').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Delete this message? This cannot be undone.')) return;
+        const id = btn.dataset.id;
+        const { error } = await supabase.from('contact_messages').delete().eq('id', id);
+        if (error) { showToast('Failed to delete message.', 'error'); return; }
+        messages = messages.filter(m => m.id !== id);
+        updateStats();
+        renderMessages();
+        showToast('Message deleted.');
+      });
+    });
+  }
+
+  /* ── Filter buttons ── */
+  document.getElementById('res-filters').addEventListener('click', (e) => {
+    const btn = e.target.closest('.filter-btn');
+    if (!btn) return;
+    document.querySelectorAll('#res-filters .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    resFilter = btn.dataset.filter;
+    renderReservations();
+  });
+
+  document.getElementById('msg-filters').addEventListener('click', (e) => {
+    const btn = e.target.closest('.filter-btn');
+    if (!btn) return;
+    document.querySelectorAll('#msg-filters .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    msgFilter = btn.dataset.filter;
+    renderMessages();
+  });
+
+  /* ── Helpers ── */
+  function esc(str) {
+    if (!str) return '—';
+    return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function formatDate(d) {
+    if (!d) return '—';
+    return new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+  }
+
+  function formatTime(t) {
+    if (!t) return '—';
+    const [h, m] = t.split(':');
+    const d = new Date(); d.setHours(+h, +m);
+    return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function formatDateTime(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+  }
+
+  function emptyState(msg) {
+    return `<div class="empty-state"><div class="empty-icon">🍜</div><p>${msg}</p></div>`;
+  }
+
+  /* ── Init ── */
+  await fetchAll();
+
+  // Real-time updates
+  supabase.channel('admin-updates')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations' }, fetchAll)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'contact_messages' }, fetchAll)
+    .subscribe();
+</script>
+</body>
+</html>
