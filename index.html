@@ -1,83 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Login | The Happy Spoon</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../style.css">
-  <script>
-    window.__ENV__ = {
-      VITE_SUPABASE_URL:      'sb_publishable_acbF6EkNpK9_DEKUJZOb4w_hAbciaul',
-      VITE_SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVheXd3cGl1c3F6Znpra2xjbXlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5ODg3OTUsImV4cCI6MjA5NjU2NDc5NX0.E8ey4LUHRvcUfvCGa_vCY1lRWQFddRodcE94bYj-DQ0'
-    };
-  </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Happy Spoon | Desi Chinese & Good Vibes</title>
+    <meta name="description" content="The Happy Spoon offers proper Desi Chinese food, good beverages, nice seating, and great music in an aesthetic, affordable environment.">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
 </head>
 <body>
-<div id="toast-container" aria-live="polite"></div>
+    <nav class="navbar" id="navbar">
+        <div class="logo">
+            <span class="logo-text">The Happy Spoon</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#hero">Home</a></li>
+            <li><a href="#about">Vibe & Music</a></li>
+            <li><a href="#menu">Menu</a></li>
+            <li><a href="#contact">Visit Us</a></li>
+        </ul>
+        <div class="hamburger">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </div>
+    </nav>
 
-<div class="admin-login-page">
-  <div class="admin-login-card scroll-reveal visible">
-    <h1>The Happy Spoon</h1>
-    <p class="sub">Admin Dashboard — sign in to continue</p>
+    <header class="hero" id="hero">
+        <div class="hero-overlay"></div>
+        <img class="hero-bg" src="assets/hero.png" alt="Aesthetic ambiance at The Happy Spoon">
+        <div class="hero-content fade-in-up">
+            <h1>The Happy Spoon</h1>
+            <p class="subtitle">Proper Desi Chinese. Good Beverages. Better Music.</p>
+            <a href="#menu" class="cta-button">Explore Menu</a>
+        </div>
+    </header>
 
-    <form id="login-form" novalidate>
-      <div class="form-group">
-        <label for="admin-email">Email</label>
-        <input type="email" id="admin-email" placeholder="admin@thehappyspoon.in" required autocomplete="email">
-      </div>
-      <div class="form-group">
-        <label for="admin-password">Password</label>
-        <input type="password" id="admin-password" placeholder="••••••••" required autocomplete="current-password">
-      </div>
-      <button type="submit" class="submit-btn" style="margin-top:8px">
-        <div class="spinner" aria-hidden="true"></div>
-        <span class="btn-text">Sign In</span>
-      </button>
-    </form>
-  </div>
-</div>
+    <section class="about" id="about">
+        <div class="container section-grid">
+            <div class="about-text scroll-reveal">
+                <h2>Nice Seating. <br>Great Ambiance.</h2>
+                <p>Welcome to <strong>The Happy Spoon</strong>, where aesthetic meets affordable. Our space is designed to give you a moody, cozy escape from the outside world. Sink into our comfortable seating, listen to curated vinyl records and smooth beats, and lose yourself in the ambiance.</p>
+                <div class="vibe-tags">
+                    <span class="tag">Vinyl Music</span>
+                    <span class="tag">Neon Glow</span>
+                    <span class="tag">Cozy Seating</span>
+                </div>
+            </div>
+            <div class="about-image scroll-reveal" style="transition-delay: 200ms;">
+                <div class="image-wrapper">
+                    <img src="assets/hero.png" alt="Aesthetic ambiance" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+            </div>
+        </div>
+    </section>
 
-<script type="module">
-  import { supabase } from '../js/supabase.js';
-  import { showToast } from '../js/toast.js';
+    <section class="menu" id="menu">
+        <div class="container">
+            <div class="section-title scroll-reveal">
+                <h2>Affordable Bites & Sips</h2>
+                <p>Our proper Desi Chinese & Beverages won't break the bank.</p>
+            </div>
+            
+            <div class="menu-grid">
+                <!-- Food Item 1 -->
+                <div class="menu-card scroll-reveal">
+                    <div class="card-image">
+                        <img src="assets/food.png" id="food-img" alt="Desi Chinese Food">
+                    </div>
+                    <div class="card-content">
+                        <h3>Chilli Paneer Bowl</h3>
+                        <p class="desc">Spicy, tangy paneer tossed with peppers and onions over hakka noodles.</p>
+                        <span class="price">₹149</span>
+                    </div>
+                </div>
 
-  // Redirect if already logged in
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session) location.replace('./dashboard.html');
+                <!-- Food Item 2 -->
+                <div class="menu-card scroll-reveal" style="transition-delay: 100ms;">
+                    <div class="card-image">
+                        <img src="assets/beverage.png" id="bev-img" alt="Cafe Beverages">
+                    </div>
+                    <div class="card-content">
+                        <h3>Signature Iced Latte</h3>
+                        <p class="desc">Premium arabica beans, aesthetic layers over ice.</p>
+                        <span class="price">₹99</span>
+                    </div>
+                </div>
 
-  const form = document.getElementById('login-form');
-  const btn  = form.querySelector('.submit-btn');
-  const txt  = btn.querySelector('.btn-text');
+                <!-- Food Item 3 -->
+                <div class="menu-card scroll-reveal" style="transition-delay: 200ms;">
+                    <div class="card-image">
+                        <img src="assets/food.png" alt="Hakka Noodles">
+                    </div>
+                    <div class="card-content">
+                        <h3>Classic Hakka Noodles</h3>
+                        <p class="desc">Wok-tossed noodles with proper street-style desi flavors.</p>
+                        <span class="price">₹129</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email    = document.getElementById('admin-email').value.trim();
-    const password = document.getElementById('admin-password').value;
+    <footer class="footer" id="contact">
+        <div class="container footer-grid">
+            <div class="footer-brand">
+                <h2>The Happy Spoon</h2>
+                <p>Good vibes only.</p>
+            </div>
+            <div class="footer-info">
+                <h4>Visit Us</h4>
+                <p>123 Aesthetic Lane, Vibe City</p>
+                <p>Open Daily: 11 AM - 11 PM</p>
+            </div>
+            <div class="footer-social">
+                <h4>Follow the Vibe</h4>
+                <div class="social-links">
+                    <a href="#">Instagram</a>
+                    <a href="#">Spotify</a>
+                    <a href="#">X</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 The Happy Spoon. All aesthetics reserved.</p>
+        </div>
+    </footer>
 
-    if (!email || !password) {
-      showToast('Please enter both email and password.', 'error');
-      return;
-    }
-
-    btn.disabled = true;
-    btn.classList.add('loading');
-    txt.textContent = 'Signing in…';
-
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-    btn.disabled = false;
-    btn.classList.remove('loading');
-    txt.textContent = 'Sign In';
-
-    if (error) {
-      showToast('Invalid email or password.', 'error');
-    } else {
-      location.replace('./dashboard.html');
-    }
-  });
-</script>
+    <script src="script.js"></script>
 </body>
 </html>
